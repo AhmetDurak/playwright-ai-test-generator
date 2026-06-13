@@ -1,0 +1,29 @@
+
+# AI assistant files
+.claude/
+CLAUDE.md
+
+# Environment & secrets
+.env
+.env.local
+cypress.env.json
+
+# Dependencies
+node_modules/
+
+# Cypress artifacts
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Test reports
+cypress/reports/
+mochawesome-report/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
