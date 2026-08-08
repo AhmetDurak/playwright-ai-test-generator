@@ -1,4 +1,3 @@
-
 # AI assistant files
 .claude/
 CLAUDE.md
@@ -6,19 +5,18 @@ CLAUDE.md
 # Environment & secrets
 .env
 .env.local
-cypress.env.json
 
 # Dependencies
 node_modules/
 
-# Cypress artifacts
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # Test reports
-cypress/reports/
-mochawesome-report/
+reports/
 
 # Logs
 *.log
@@ -27,3 +25,5 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+.env*

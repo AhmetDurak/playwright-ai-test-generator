@@ -1,0 +1,6 @@
+{
+  "standard": { "envUsernameKey": "SAUCEDEMO_STANDARD_USER" },
+  "lockedOut": { "envUsernameKey": "SAUCEDEMO_LOCKED_OUT_USER" },
+  "problem": { "envUsernameKey": "SAUCEDEMO_PROBLEM_USER" },
+  "performanceGlitch": { "envUsernameKey": "SAUCEDEMO_PERFORMANCE_GLITCH_USER" }
+}
