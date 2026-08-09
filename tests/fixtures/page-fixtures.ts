@@ -1,4 +1,6 @@
 import { test as base, expect, Page } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { LoginPage } from '../../pages/LoginPage';
 import { InventoryPage } from '../../pages/InventoryPage';
 import { CartPage } from '../../pages/CartPage';
@@ -33,7 +35,27 @@ function requireEnv(key: string): string {
   return value;
 }
 
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
 export const test = base.extend<Fixtures>({
+  // Overrides the built-in `page` fixture: on failure, saves a DOM snapshot
+  // next to the trace/screenshot so `src/ai/healSelector.ts` has an HTML
+  // file to inspect for a broken locator.
+  page: async ({ page }, use, testInfo) => {
+    await use(page);
+
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const dir = path.join(testInfo.project.outputDir, 'dom-snapshots');
+      await mkdir(dir, { recursive: true });
+      const filePath = path.join(dir, `${slugify(testInfo.titlePath.join('-'))}.html`);
+      await writeFile(filePath, await page.content(), 'utf-8');
+      await testInfo.attach('dom-snapshot', { path: filePath, contentType: 'text/html' });
+      console.log(`DOM snapshot saved for healing: ${filePath}`);
+    }
+  },
+
   users: async ({}, use) => {
     const password = requireEnv('SAUCEDEMO_PASSWORD');
     await use({
