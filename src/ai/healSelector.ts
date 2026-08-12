@@ -1,12 +1,11 @@
 import 'dotenv/config';
-import Anthropic from '@anthropic-ai/sdk';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createProvider } from './providers/index.ts';
 
 const PROJECT_ROOT = process.cwd();
 const PROMPT_PATH = path.join(PROJECT_ROOT, 'src/prompts/healSelector.prompt.md');
 
-const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 2048;
 
 function stripNoise(html: string): string {
@@ -23,11 +22,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error('Missing ANTHROPIC_API_KEY. Set it in your .env file.');
-    process.exit(1);
-  }
+  const provider = createProvider();
 
   const [systemPrompt, rawHtml] = await Promise.all([
     readFile(PROMPT_PATH, 'utf-8'),
@@ -37,21 +32,14 @@ async function main(): Promise<void> {
   const html = stripNoise(rawHtml);
   const userMessage = `## Old selector\n${oldSelector}\n\n## Page HTML\n\`\`\`html\n${html}\n\`\`\``;
 
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+  const responseText = await provider.complete({
     system: systemPrompt,
-    messages: [{ role: 'user', content: userMessage }],
+    prompt: userMessage,
+    maxTokens: MAX_TOKENS,
   });
 
-  const textBlock = response.content.find((block) => block.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    console.error('No text content returned from the model.');
-    process.exit(1);
-  }
-
-  console.log(textBlock.text.trim());
+  console.log(`(via ${provider.name}:${provider.model})\n`);
+  console.log(responseText.trim());
 }
 
 main().catch((error) => {

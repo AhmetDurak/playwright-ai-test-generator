@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import Anthropic from '@anthropic-ai/sdk';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { createProvider } from './providers/index.ts';
 
 const PROJECT_ROOT = process.cwd();
 const PROMPT_PATH = path.join(PROJECT_ROOT, 'src/prompts/generateTest.prompt.md');
@@ -15,7 +15,6 @@ const CONTEXT_FILES = [
   'tests/fixtures/page-fixtures.ts',
 ];
 
-const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 2048;
 
 function slugify(text: string): string {
@@ -57,37 +56,25 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error('Missing ANTHROPIC_API_KEY. Set it in your .env file.');
-    process.exit(1);
-  }
-
+  const provider = createProvider();
   const systemPrompt = await readFile(PROMPT_PATH, 'utf-8');
   const context = await loadContext();
   const userMessage = `## Existing Page Objects & Fixtures\n${context}\n## Scenario\n${scenario}`;
 
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+  const responseText = await provider.complete({
     system: systemPrompt,
-    messages: [{ role: 'user', content: userMessage }],
+    prompt: userMessage,
+    maxTokens: MAX_TOKENS,
   });
 
-  const textBlock = response.content.find((block) => block.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    console.error('No text content returned from the model.');
-    process.exit(1);
-  }
-
-  const code = stripCodeFences(textBlock.text);
+  const code = stripCodeFences(responseText);
 
   await mkdir(OUTPUT_DIR, { recursive: true });
   const fileName = `ai_${timestamp()}_${slugify(scenario)}.spec.ts`;
   const outputPath = path.join(OUTPUT_DIR, fileName);
   await writeFile(outputPath, code, 'utf-8');
 
+  console.log(`Generated with ${provider.name}:${provider.model}`);
   console.log(`Generated: tests/e2e/ai-generated/${fileName}`);
   console.log(`Review and run with: npx playwright test tests/e2e/ai-generated/${fileName}`);
 }

@@ -8,6 +8,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["node", "@playwright/test"]
   },
   "include": ["tests", "pages", "src", "playwright.config.ts"]
